@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "blocked",
+  "observed_host": {
+    "os": "macOS",
+    "version": "26.7.1",
+    "build": "25G309",
+    "architecture": "arm64",
+    "hardware_virtualization_reported": true,
+    "rust": "1.98.1",
+    "cargo": "1.98.1",
+    "bun": "1.4.2",
+    "installed_msb": "0.2.6"
+  },
+  "workspace": {
+    "external_crates": [],
+    "cargo_lock_sha256": "67fbadad64ae324b34638391dd51b12404517279f8006f0d884190dc7f31623a"
+  },
+  "candidates_not_linked": {
+    "microsandbox_sdk": "0.7.2",
+    "rmcp": "3.4.0",
+    "requested_rmcp_3_4_1_found": false
+  },
+  "guest": {
+    "bun_version": null,
+    "image_digest": null,
+    "runtime_version": null,
+    "protocol_version": null
+  },
+  "runtime_gates": {
+    "vm_boot": "not_tested",
+    "bounded_sdk_transport": "blocked",
+    "network_denial": "not_tested",
+    "resource_enforcement": "not_tested",
+    "confirmed_teardown": "not_tested",
+    "crash_reconciliation": "not_tested"
+  },
+  "evidence": "../docs/compatibility.md"
+}
