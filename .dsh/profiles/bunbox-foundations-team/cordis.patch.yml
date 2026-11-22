@@ -1,0 +1,19 @@
+[
+  {
+    "insert": [
+      {
+        "id": "bunbox-foundations-persistence",
+        "name": "@deepseek-ai/dsh-session-persistence-jsonl"
+      },
+      {
+        "id": "bunbox-foundations-team",
+        "name": "@deepseek-ai/dsh-experimental-agent-team",
+        "config": {}
+      },
+      {
+        "id": "bunbox-foundations-team-tools",
+        "name": "@deepseek-ai/dsh-experimental-tool-agent-team"
+      }
+    ]
+  }
+]

@@ -1,0 +1,72 @@
+{
+  "dependencies": [
+    {
+      "package": "htmx.org",
+      "version": "2.0.11",
+      "registry": "https://registry.npmjs.org/htmx.org/2.0.11",
+      "tarball": "https://registry.npmjs.org/htmx.org/-/htmx.org-2.0.11.tgz",
+      "integrity": "sha512-Thx/WtpeOQqSrqBCw/A1cwGJGg4UrVa3+sW0GmrM3p4gJgO89ecH4qtbnyzDDWFvBTqjnIMCgELTNt636dtamA==",
+      "verified": true,
+      "files": [
+        {
+          "file": "vendor/htmx.org-2.0.11/htmx.min.js",
+          "sha256": "d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717"
+        },
+        {
+          "file": "vendor/htmx.org-2.0.11/LICENSE",
+          "sha256": "d3d2456f76414f2456104660ebd65aff1c04cd7966b942bdabd63f3cdb316a38"
+        }
+      ]
+    },
+    {
+      "package": "alpinejs",
+      "version": "3.15.8",
+      "registry": "https://registry.npmjs.org/alpinejs/3.15.8",
+      "tarball": "https://registry.npmjs.org/alpinejs/-/alpinejs-3.15.8.tgz",
+      "integrity": "sha512-zxIfCRTBGvF1CCLIOMQOxAyBuqibxSEwS6Jm1a3HGA9rgrJVcjEWlwLcQTVGAWGS8YhAsTRLVrtQ5a5QT9bSSQ==",
+      "verified": true,
+      "files": [
+        {
+          "file": "vendor/alpinejs-3.15.8/cdn.min.js",
+          "sha256": "899842782a7fd16fcc2d7a7c877ff9ec159394044c87b158b2ef132786606932"
+        },
+        {
+          "file": "vendor/alpinejs-3.15.8/LICENSE.md",
+          "sha256": "08b7502da6e7aa1d0bbdc97d220fbf669b9366c61bd0f072238283c89bc4773a"
+        }
+      ]
+    },
+    {
+      "package": "htmx-ext-sse",
+      "version": "2.2.4",
+      "registry": "https://registry.npmjs.org/htmx-ext-sse/2.2.4",
+      "tarball": "https://registry.npmjs.org/htmx-ext-sse/-/htmx-ext-sse-2.2.4.tgz",
+      "integrity": "sha512-LJmxVhykyflBWgh5PvbRidcyuqMHlgfajmmzumvKctv9puvsufeH6OaejSMZTNTnEI8O2wXXn4ZZtBdpEMqmEQ==",
+      "verified": true,
+      "files": [
+        {
+          "file": "vendor/htmx-ext-sse-2.2.4/sse.js",
+          "sha256": "3b5992a541619babefc4c169505af474df5c3039da51e59b96ccf9241ecd61d2"
+        },
+        {
+          "file": "vendor/htmx-ext-sse-2.2.4/LICENSE",
+          "sha256": "a17d224ce9afdc21ec9491b76a2f5d036d19aa641ac4f85ca29c21f9f7e54fdf"
+        }
+      ]
+    }
+  ],
+  "brand": "KnowMe verified dark mark and selected theme from approved existing guide, staged for private review only",
+  "brand_files": {
+    "theme.css": "5a060b47a3028f091896ddb23bbdeae48159981de20b195fe57925fb0c8625fe",
+    "fonts.css": "38be1bd54b9c415b7fd26b3374b84215d7b09fa138be08661749b4b0813225a8",
+    "masthead.svg": "b4398273154a112c07d47bae60cd0032a97d82edf63c9ddf1ffb63180d192227",
+    "SpaceGrotesk-OFL.txt": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72",
+    "Roboto-OFL.txt": "061402327a96aadb0bfb694a960ed289ecd38d383e396243831ab81feb109c41",
+    "font-0.ttf": "dece7c71bbe61710787f0839c722c65e87355dd2eb4a823e6b5488121ff81e4b",
+    "font-1.ttf": "4d984240cefb093a74300bcae4b5dbd49f700e0af501eaaa079c56aa64142d2f",
+    "font-2.ttf": "35757eaa996b3359022f47f164a67ee9eac04971af24c5b8fbd4b89e844ff190",
+    "font-3.ttf": "ec926d5065eaca49a48f96e312bbae0bbc5733c24215cf5dfabbdccee926fef7",
+    "font-4.ttf": "6c0346b8d297ebdc225832833e03e884a26ad99d265ecd3924d46e1ba285ea87",
+    "font-5.ttf": "3e756954468ff1cb302dae0414262e72f76a67d87bef3fa1f3226cd0fb9b2d85"
+  }
+}

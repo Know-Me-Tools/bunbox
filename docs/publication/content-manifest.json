@@ -1,0 +1,96 @@
+{
+  "document": "BunBox",
+  "sources": [
+    {
+      "source": "docs/ORIGIN.md",
+      "sha256": "c7142850cb488d8df3bf4c20a96b77d09e8f73b9a9ff61ad9ce49463d7505b4f",
+      "bytes": 7115,
+      "section": "origin"
+    },
+    {
+      "source": "docs/architecture.md",
+      "sha256": "0cf7022745f9c0831674575ce5aa68b81098c1c285d8cd4280b750e92440e2a3",
+      "bytes": 3532,
+      "section": "architecture"
+    },
+    {
+      "source": "docs/system-design.md",
+      "sha256": "9b41b200654c8c2caed256561d4c0cca46803df0f27d0e864c9ff702bea8e31b",
+      "bytes": 3687,
+      "section": "system"
+    },
+    {
+      "source": "docs/prd.md",
+      "sha256": "e9b2d54f0fe11bcd7cb7b986fb5ef2894b4ecf0e5b51a3e0a940ddcb571ca72f",
+      "bytes": 3144,
+      "section": "functional"
+    },
+    {
+      "source": "docs/execution-contract.md",
+      "sha256": "4c9f33d271018c075881b2d01c9354bd80bf29083888818c1b1b793c7a852471",
+      "bytes": 3809,
+      "section": "execution"
+    },
+    {
+      "source": "docs/mcp-tool-server.md",
+      "sha256": "461fd065331299a19e70cdf4ce3d46d67bc8f8240d565fc97e07c0fc50c38c70",
+      "bytes": 7661,
+      "section": "mcp"
+    },
+    {
+      "source": "docs/locus-external-tool.md",
+      "sha256": "7f8496dd059c4ac30b4a8be383a4d5c7f186d7ab08b7766b29560433e0c2d7aa",
+      "bytes": 12146,
+      "section": "locus"
+    },
+    {
+      "source": "docs/threat-model.md",
+      "sha256": "01e760ec9280a3d5f63fafb457d3969fbe6bf1337235e1991dad0517503609d2",
+      "bytes": 2965,
+      "section": "threat"
+    },
+    {
+      "source": "docs/transport-decision.md",
+      "sha256": "be3a1ffb4ae84ee112ce123b70afcb44996394cc6669aa7de92132e8ac6bfd31",
+      "bytes": 4640,
+      "section": "transport"
+    },
+    {
+      "source": "docs/compatibility.md",
+      "sha256": "81295fb2e7f862544ce637f09393a01b4f06c3a3e116ab47cec6dc131cb3f81e",
+      "bytes": 4435,
+      "section": "compatibility"
+    },
+    {
+      "source": "docs/task-list.md",
+      "sha256": "c7513be3a6ea72927ee5bf56d19cf4269d61ca3cbb677cff5087ee3e97eff5e0",
+      "bytes": 4357,
+      "section": "implementation"
+    },
+    {
+      "source": "docs/tech-doc.md",
+      "sha256": "82edbbd6aefbd51e65e2e35f1140d9e5e0d59201bc2e2df24584e8945280ca53",
+      "bytes": 3443,
+      "section": "technical"
+    },
+    {
+      "source": "docs/verification.md",
+      "sha256": "b9e26650021c1dba0b5c4c294c7a5d503cc1abd7a1803069ecc5a02e706197dd",
+      "bytes": 2539,
+      "section": "verification"
+    },
+    {
+      "source": "README.md",
+      "sha256": "6850d7b998dd436a918da6fc5d6e6754b2a0f65f21e5f119515661f67532dec4",
+      "bytes": 3152,
+      "section": "baseline"
+    },
+    {
+      "source": "LICENSE",
+      "sha256": "1dba2c42a15390c8777a338ca2737f853eb0d5a34aaea8ee615ee659d232b61a",
+      "bytes": 1076,
+      "section": "license"
+    }
+  ],
+  "notes": "Source headings normalized; local Markdown references remapped to in-document anchors; diagrams are added"
+}

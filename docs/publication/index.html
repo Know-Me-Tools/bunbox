@@ -1,0 +1,733 @@
+<!doctype html><html lang="en" data-brand="knowme" data-mode="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BunBox | Give the agent a job, not the whole computer</title><meta name="description" content="The BunBox Origin Story, architecture, functional specification and implementation plan. Phase 0 is blocked; no runtime is qualified."><meta property="og:title" content="BunBox | Give the agent a job, not the whole computer"><meta property="og:description" content="Origin story, architecture, functional specification and implementation plan."><meta property="og:type" content="article"><meta property="og:image" content="https://ipfs.prometheusags.ai/ipfs/bafkreihe3dqenbugvirrffmfun35a5eb5z4exonwubersglr4oinybwoae"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Actual KnowMe BunBox document preview"><meta name="twitter:image" content="https://ipfs.prometheusags.ai/ipfs/bafkreihe3dqenbugvirrffmfun35a5eb5z4exonwubersglr4oinybwoae"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BunBox | Give the agent a job, not the whole computer"><meta name="twitter:description" content="Origin story, architecture, functional specification and implementation plan."><!-- Validated absolute OG image must be inserted after the actual screenshot has been published and read back. --><meta name="theme-color" content="#0B0F14"><meta name="htmx-config" content='{"selfRequestsOnly":true,"allowScriptTags":false}'><link rel="icon" href="brand/icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="brand/fonts.css"><link rel="stylesheet" href="brand/theme.css"><link rel="stylesheet" href="style.css"><script defer src="vendor/htmx.org-2.0.11/htmx.min.js"></script><script defer src="vendor/htmx-ext-sse-2.2.4/sse.js"></script><script defer src="vendor/alpinejs-3.15.8/cdn.min.js"></script><script defer src="app.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header class="top"><img src="brand/masthead.svg" width="160" height="50" alt="KnowMe"><span>Engineering design · MIT project</span></header><main id="main" tabindex="-1"><section class="hero" aria-labelledby="cover-title"><p class="kicker">Origin Story · Architecture · Functional Specification · Implementation Plan</p><h1 id="cover-title">Give the agent a job,<br> not the whole computer.</h1><p class="sub">BunBox is a proposed isolated workbench for JavaScript and TypeScript. Give it selected inputs and get one verified result without giving it access to your account.</p><p class="status"><strong>Phase 0 · Blocked</strong><span>Framing and preflight verified. No VM execution, MCP server, or cloud qualification.</span></p><figure class="hero-diagram"><img src="journey.svg" width="720" height="260" alt="Select two exact file versions, compare them in one private worker, and verify one result and receipt."><figcaption>Proposed workflow. The job gets file copies, not your account.</figcaption></figure></section><section class="intro" aria-labelledby="read-title"><h2 id="read-title">Read the design</h2><p>The first milestone is one real, benign, independently stopped VM on an ARM64 Mac. Standard MCP clients and persistent Locus dots can later call the same typed external job. BunBox is not embedded in UAR and is not required for Locus’s first release.</p><p><a href="bunbox-origin-architecture-spec-plan.md" download>Download canonical consolidated Markdown</a></p><details class="contents" x-data="{open:window.innerWidth > 690}" :open="open" @toggle="open=$el.open" open><summary>Contents</summary><nav aria-label="Contents"><ol><li><a href="#origin">Origin Story</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#system">System design</a></li><li><a href="#functional">Functional specification</a></li><li><a href="#execution">Execution contract</a></li><li><a href="#mcp">MCP and ordinary agents</a></li><li><a href="#locus">Locus external-tool profile</a></li><li><a href="#threat">Isolation and threat boundaries</a></li><li><a href="#transport">Transport decision</a></li><li><a href="#compatibility">Pinned compatibility findings</a></li><li><a href="#implementation">Staged implementation plan</a></li><li><a href="#technical">Technical design notes</a></li><li><a href="#verification">Existing verification and limits</a></li><li><a href="#baseline">Project baseline and operator commands</a></li><li><a href="#license">BunBox project license</a></li></ol></nav></details><div id="gate-panel" class="gate-callout"><h3>Readiness summary</h3><p>Phase 0 is blocked. See full verification notes for the source-reported checks and what is untested.</p><a href="#verification" data-html-control hx-get="readiness.fragment.html" hx-target="#gate-panel" hx-swap="innerHTML">Open verification notes</a></div><figure class="diagram"><img src="ownership.svg" width="720" height="374" alt="Locus keeps work and decisions; UAR makes one scoped call; BunBox tracks job and stop; the file service owns final save."><figcaption>Proposed ownership of the persistent-dot workflow. A transport acknowledgment is not a teardown or save receipt.</figcaption></figure></section><section class="chapter" id="origin"><p class="kicker">01 / BUNBOX</p><h2>Origin Story</h2><p><strong>Story ID:</strong> BB-ORIGIN-001, candidate revision 1. <strong>Owner:</strong> BunBox product operator. <strong>Audience:</strong> people using agents, harness integrators, and workspace operators. Based on the operator's requested local/code-tool and persistent-dot journeys and the current BunBox specification. The future scenes use synthetic examples, not measured customer behavior, verified cloud capability, or an adopted contract.</p>
+<h3>Before</h3>
+<p>I have two exports, and I need someone to show me where they disagree. My agent can tell me how to compare them, but that leaves me doing the work. If I give it a general shell or a copy of my whole Drive, I've handed it far more than two files. If I walk away or switch agents mid-job, I don't know whether the work stopped, is still running, or already produced a result. Starting over is an easy way to get two copies, or pay for the same work twice.</p>
+<p>A developer sees another version of the problem: their ordinary agent can call tools over stdio, their remote harness uses Streamable HTTP, and an older customer client only speaks the old HTTP+SSE protocol. They want one trustworthy tool behavior, not three differently privileged executors. The operator needs to know which version actually works, whose capacity it uses, and whether a cancelled workload really stopped.</p>
+<p><strong>Observed baseline:</strong> BunBox currently has a fail-closed preflight and bounded framing; it has no VM execution, durable service or MCP server. <strong>Value hypothesis:</strong> deliver a useful file result without manual handoff or broad file access; resume without rerunning; integrate across actual harnesses without changing ownership or policy. Track time to usable output, manual steps, wake-to-visible-result, resource usage and retention cost; compare equivalent synthetic workloads before setting targets. Authorized execution, no cross-workspace access, truthful status and no duplicate effects are guardrails, not averages.</p>
+<h3>The future day</h3>
+<p>I select two CSV files and ask for a comparison. The agent tells me what it will use and where it will place the result. Inside the job, the code sees those copies and a temporary work area, not my account. I can ask a regular agent for a short result or ask my persistent dot to finish while I'm gone. If the job needs a decision, I can see what is waiting and why; other work can keep moving. When I return, I find the same job and the verified report. My dot can explain which inputs it used, whether the result is private, and whether anything needs my attention.</p>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Scene</th>
+<th>Desired experience</th>
+<th>Smallest credible evidence and failure condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BB-01 · Local owner, first milestone</td>
+<td>I execute one harmless JS/TS job in an isolated ARM Mac VM and get a bounded result. Missing runtime prerequisites block the job rather than running it on the host.</td>
+<td>Pinned real-host VM and independent stop/cleanup readback; no host fallback. The current local gate remains unchanged.</td>
+</tr>
+<tr>
+<td>BB-02 · Regular agent, stdio</td>
+<td>I expose BunBox as a named tool, give my ordinary agent selected files and receive a structured result. If I disconnect, a qualified durable profile can find the original job; an unqualified local mode states that limitation.</td>
+<td>Real named stdio client; lose the submit response and recover by original authorized intent, then verify one logical execution where continuity is promised. Stdio adapter death does not prove job cancellation.</td>
+</tr>
+<tr>
+<td>BB-03 · Regular agent, remote MCP</td>
+<td>A current remote tool can use JSON or streaming according to the chosen profile. An older client gets explicitly supported compatibility or a clear refusal; no hidden change in permission.</td>
+<td>Exercise each claimed Streamable HTTP and legacy HTTP+SSE profile in the <a href="#mcp">matrix</a>: recovery by intent after a lost response, denied caller, oversized input, no weaker fallback, and safe repeat cancel or retrieve.</td>
+</tr>
+<tr>
+<td>BB-04 · Persistent dot sleeps and resumes</td>
+<td>I ask from one device, leave while the job waits, and return through a different UAR worker without repeating the request. I see the authorized saved report once.</td>
+<td>Lose submit acknowledgment, replay the event, replace the worker, resolve the same operation and see one independent job and one file-service receipt. Scope stays with the same dot and work revision.</td>
+</tr>
+<tr>
+<td>BB-05 · Ask, decline and revoke</td>
+<td>When access changes or the job needs a decision, I see precisely what is being requested. An old approval can't apply to new data, scope or destination. Other items continue.</td>
+<td>Typed bound review, stale or revoked grant refusal before dispatch/save, independent work continues, no protected action or extra notification.</td>
+</tr>
+<tr>
+<td>BB-06 · Cancel without guessing</td>
+<td>If I cancel while busy, I see that it was requested; only verified teardown says the VM stopped. If my file was already saved, tell me rather than pretending cancellation erased it.</td>
+<td>Delay host confirmation, lose the transport task or the save response, and reconnect. Verify terminal cancellation only after independent teardown and no possible late save; distinguish an already committed save.</td>
+</tr>
+<tr>
+<td>BB-07 · Privacy and limits</td>
+<td>Another dot cannot read, cancel or retrieve my work. If capacity runs out or an output cannot be safely saved, I get a reason, not an endless spinner or a file in the wrong place.</td>
+<td>Two synthetic workspaces, no cross-scope disclosure or side effect; quota refusal or bounded wait and isolated teardown. Verify safe artifact type/content and scratch deletion separately.</td>
+</tr>
+<tr>
+<td>BB-08 · Operator recovery</td>
+<td>If a worker or controller disappears, I can tell what is verified, what is uncertain and who owns the next step. A known job is never casually restarted under a new ID.</td>
+<td>Lose the VM creation receipt; reconcile the exact owned attempt or retain unknown/quarantined capacity with no replacement or output promotion.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Handoff and definition of done</h3>
+<p>Phases remain distinct: local real VM → bounded execution and durable artifacts → ordinary MCP tool with separately qualified profiles → hosted isolation → optional Locus integration. Independent jobs can proceed while an external dependency is pending; the operator needs the exact runtime/transport qualification and valid approvals before claiming more. Locus base continuity must not wait for BunBox.</p>
+<p>Open decisions are the first named client per profile, first verified hosted runtime, allowed code and file formats, retention and locality, spend and latency targets, and the approved input/output evidence. No actual customer data or external recipient is needed for this candidate. The <a href="#execution">base contract</a>, <a href="#mcp">MCP contract</a>, and <a href="#locus">Locus external profile</a> carry this Story ID forward into scoped KBD phase and VLBV cases. The first After story should show the small job from request to usable result and report an honest refusal or recovery in the same language the user saw. A transport handshake, a green build, or a nice demo without the underlying receipt is not that proof.</p></section><section class="chapter" id="architecture"><p class="kicker">02 / BUNBOX</p><h2>Architecture</h2><h3>Current boundary</h3>
+<p>Phase 0 is <strong>BLOCKED</strong>. The workspace contains only <code>bunbox-sandbox</code> at
+<code>crates/sandbox</code>; its <code>bunbox</code> binary is a readiness/preflight surface.
+Dependency-free preflight and bounded framing are implemented and locally validated; see <code>verification.md</code>.
+There is no linked Microsandbox SDK, VM integration, interpreter, durable store, or MCP service.
+<code>execution-contract.md</code> and <code>threat-model.md</code> remain authoritative.</p>
+<h3>Intended dependency layers</h3>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Responsibility</th>
+<th>Admission gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bounded framing primitive</td>
+<td>Reject oversized inputs before payload allocation</td>
+<td>Local integration tests passed; not an SDK transport</td>
+</tr>
+<tr>
+<td>Sandbox adapter</td>
+<td>VM lifecycle, network denial, quotas, host-confirmed cleanup</td>
+<td>Phase 0 blockers resolved</td>
+</tr>
+<tr>
+<td>Mac VM probe</td>
+<td>Benign provisioning and containment evidence</td>
+<td>Approved runtime and isolated home</td>
+</tr>
+<tr>
+<td>Execution worker</td>
+<td>Pinned guest Bun, wrapper, state, bounded results</td>
+<td>Real VM gate passed</td>
+</tr>
+<tr>
+<td>Supervisor</td>
+<td>Serialized dispatch, deadlines, cancellation, ownership</td>
+<td>Validated worker/lifecycle</td>
+</tr>
+<tr>
+<td>Durable storage</td>
+<td>Accepted identities, reconciliation, finalized artifacts</td>
+<td>Real VM gate passed</td>
+</tr>
+<tr>
+<td>MCP adapter</td>
+<td>Validated bounded requests, capability description</td>
+<td>Core semantics and dependency approved</td>
+</tr>
+</tbody>
+</table></div>
+<p>These are responsibility boundaries, not additional crates already created.
+Outer adapters depend on core policy/contracts; core policy must not depend on MCP.
+The sandbox adapter alone owns runtime-specific integration. Guest helpers must not
+be treated as host authorization or isolation mechanisms.</p>
+<h3>Trust and control</h3>
+<ul>
+<li>Submitted code, guest events/files/results, and guest packages are untrusted.</li>
+<li>The host OS/hypervisor, runtime dependencies, supervisor, parsers, and storage are trusted.</li>
+<li>IDs, generations, and sequences reject stale/malformed events; they do not authenticate
+  a worker against hostile code sharing its VM.</li>
+<li>Keep cancellation/control independent of output flow so floods cannot starve teardown.</li>
+<li>Host policy owns paths, budgets, deadlines, resource identities, and cleanup decisions.</li>
+<li>All queues and upstream buffers need verified bounds; a bounded final queue is insufficient.</li>
+</ul>
+<h3>Runtime and ownership</h3>
+<p>Use an explicitly isolated <code>MSB_HOME</code>, never the existing legacy installation.
+Record creation intent before provisioning and reconcile immutable installation-owned
+identities under an exclusive lock; enumerate all resource pages without touching others.
+Normal completion does not disable VM-wide quotas or idle deadlines.
+Running timeout/cancellation invalidates the session; unknown teardown quarantines capacity.</p>
+<h3>Optional cloud integration</h3>
+<p>The <a href="#locus">Locus external-tool specification</a> defines the proposed cloud boundary. Keep the BunBox supervisor and sandbox out of UAR. Locus and its workflow engine own sleep, wake, approvals and the owner's durable state. Cloud operation ownership, file promotion, tenant isolation and receipts require independent qualification. The local installation lock and Mac verification do not establish these properties for a replicated cloud service.</p>
+<h3>Deferred choices</h3>
+<p>Do not select an unreviewed SDK patch or alternate transport merely to unblock builds.
+Microsandbox 0.7.2 has unbounded event buffering and unenforced streaming timeout.
+Legacy msb 0.2.6 remains untouched. rmcp 3.4.1 is absent; 3.4.0 is an unapproved candidate.
+Storage engine, guest image, dependency APIs, and wire payload schema remain undecided.</p></section><section class="chapter" id="system"><p class="kicker">03 / BUNBOX</p><h2>System design</h2><h3>Status</h3>
+<p>Target design only; Phase 0 is <strong>BLOCKED</strong>. Dependency-free preflight and
+length-prefix framing are implemented and locally validated (see <code>verification.md</code>).
+VM/SDK integration remains unvalidated. No guest executes today.
+Refer to <code>execution-contract.md</code> for behavior and <code>threat-model.md</code> for required controls.
+The first runtime acceptance gate is a real VM on the user's ARM64 Mac.</p>
+<h3>Planned request lifecycle</h3>
+<ol>
+<li>Validate ownership, source size, operation identity, policy, and admission capacity.</li>
+<li>Persist accepted identity before dispatch; reject key reuse with a different payload.</li>
+<li>Persist creation intent before provisioning any new installation-owned VM.</li>
+<li>Admit only one dispatched request per session and enforce a host-owned deadline.</li>
+<li>Validate bounded guest events against execution identity, generation, and sequence.</li>
+<li>Finalize a bounded result without assuming guest completion proves host-side cleanup.</li>
+</ol>
+<p>This lifecycle is not implemented by the preflight CLI. Do not expose accepted work
+until durable acceptance and recovery exist. An initial VM probe is not an interpreter.</p>
+<h3>Framing and resource budgets</h3>
+<ul>
+<li>Check a declared length before payload allocation; reject oversized and truncated frames.</li>
+<li>Apply independent source, result, stdout/stderr, frame, event-count, and queue budgets.</li>
+<li>Cover upstream transport buffers and collection paths, not only application queues.</li>
+<li>Bound sessions, CPU, memory, processes, disk, artifacts, and execution/idle time separately.</li>
+<li>Guest-side serialization consumes the guest budget; host deadlines cannot be reset by events.</li>
+<li>Final wire schema and numerical budgets require implementation review and measured tests.</li>
+</ul>
+<h3>Cancellation and uncertain outcomes</h3>
+<p>Queued cancellation prevents dispatch. Running cancellation or timeout invalidates the
+session and requires VM destruction through a separate, non-starvable control path.
+Only independent host-side confirmation completes cancellation; dropping a future is not stop.
+If stop or resource removal cannot be confirmed, expose cleanup-pending and quarantine capacity.
+A disconnected client neither implicitly cancels nor replays accepted work.
+After restart, uncertain accepted executions become <code>OutcomeUnknown</code>, not inferred success.
+Polling will return authoritative status once the durable service exists.</p>
+<h3>Recovery and persistence</h3>
+<p>Hold an exclusive installation lock before reconciliation or admission. Discover resources
+by immutable installation/resource identity even if provisioning lost its reply; scan all pages.
+Never remove unrelated resources or reuse quarantined capacity without confirmed cleanup.
+Explicit <code>state</code> dies with worker/reset/failure; guest files may die with the guest volume.
+Only finalized host-stored artifacts have independent retention guarantees; reset is not deletion.
+A failed execution can leave mutations and side effects; execution is not transactional.</p>
+<h3>Artifact and guest boundaries</h3>
+<p>Use host-generated opaque artifact destinations, quota-bounded streaming, and race-resistant
+extraction that rejects special files and path escapes. No guest path authorizes a host path.
+Deny networking explicitly; do not inherit host secrets, control sockets, or general mounts.
+Residual callbacks/subprocesses remain possible, so quotas and idle deadlines survive completion.</p>
+<h3>External adapters</h3>
+<p>The <a href="#mcp">MCP server profiles</a> expose the same core job semantics without putting an executor in a transport process. The <a href="#locus">Locus profile</a> adds durable handoff and independently authorized artifact promotion. Neither replaces the local VM or transport gates.</p></section><section class="chapter" id="functional"><p class="kicker">04 / BUNBOX</p><h2>Functional specification</h2><h3>Status and authority</h3>
+<ul>
+<li>Phase 0 is <strong>BLOCKED</strong>; no code-execution capability is available.</li>
+<li>This document is a plan, not evidence of an implemented interpreter.</li>
+<li><code>execution-contract.md</code> governs semantics; <code>threat-model.md</code> governs boundaries.</li>
+<li>Implemented scope: one dependency-free <code>bunbox-sandbox</code> crate, preflight CLI,
+  and preallocation-bounded length-prefix framing.</li>
+<li>Local foundation checks passed: 9 integration tests, 92.31% line coverage, formatting,
+  and Clippy. See <code>verification.md</code>; VM/SDK integration remains unvalidated.</li>
+</ul>
+<h3>Product goal</h3>
+<p>Provide a local, single-owner JavaScript/TypeScript execution service on the
+user's ARM64 Mac, with a Rust control plane and one Microsandbox VM per session.
+Mac is the first acceptance platform. Linux and Windows need separate evidence.
+MCP connections are transports, not execution-session identities.</p>
+<h3>Intended first release</h3>
+<ul>
+<li>Execute an async wrapper with <code>await</code>, explicit <code>return</code>, and execution-local declarations.</li>
+<li>Permit only curated, version-pinned dynamic imports; no arbitrary package installation.</li>
+<li>Provide bounded output/results, structured errors, scoped files, and published artifacts.</li>
+<li>Keep explicit <code>state</code> only while its live worker remains healthy.</li>
+<li>Distinguish live state, guest workspace, and finalized host-stored artifact lifetimes.</li>
+<li>Serialize requests per session; do not promise transactional rollback or background services.</li>
+<li>Expose only actually implemented capabilities through the eventual MCP description.</li>
+</ul>
+<h3>Delivery gates</h3>
+<ol>
+<li>Resolve bounded transport, timeout, and runtime compatibility blockers.</li>
+<li>Prove real VM provisioning, containment, and independently confirmed teardown on Mac.</li>
+<li>Only then implement the execution worker and validate guest Bun semantics.</li>
+<li>Add durable acceptance/recovery and artifacts before exposing accepted execution service.</li>
+<li>Add bounded MCP transport only after its dependency and ingress review are approved.</li>
+</ol>
+<h3>Acceptance requirements</h3>
+<ul>
+<li>Reject execution when prerequisites are missing; never fall back to host execution.</li>
+<li>Enforce budgets before allocation throughout the transport, not after SDK buffering.</li>
+<li>Confirm termination before declaring running cancellation complete.</li>
+<li>Report unconfirmed cleanup as cleanup-pending and quarantine affected capacity.</li>
+<li>Report uncertain accepted work as <code>OutcomeUnknown</code>; never replay it automatically.</li>
+<li>Demonstrate isolation, restart recovery, cleanup, and bounded-load behavior on real VMs.</li>
+</ul>
+<h3>Explicit exclusions</h3>
+<p>No public/network service, arbitrary host mounts, host credentials or commands,
+Docker socket, static-import promise, live-state migration, or unsandboxed fallback.
+Preflight and framing validation alone do not establish VM readiness or security.</p>
+<h3>Future persistent-dot profile</h3>
+<p>A user can ask a Locus dot to transform selected files and retrieve a verified result after disconnect or worker replacement. <a href="#locus">The external-tool extension</a> is optional and separately qualified; the single-owner Mac remains the first release and provides no cloud tenancy, runtime or deployment assurance.</p></section><section class="chapter" id="execution"><p class="kicker">05 / BUNBOX</p><h2>Execution contract</h2><p>Status: target contract, <strong>not an implemented interpreter</strong>. Phase 0 is blocked on a bounded Microsandbox transport. The current executable reports readiness; it does not accept or execute code.</p>
+<h3>Intended first release</h3>
+<p>Local single-owner service on this ARM64 Mac, with a Rust control plane and one Microsandbox VM per session running Bun. Linux and Windows require independent real-host validation. MCP connections are not execution sessions. Network/shared-server deployment is deferred.</p>
+<p>Support JavaScript and TypeScript, <code>await</code> inside an async wrapper, explicit <code>return</code>, curated version-pinned dynamic imports, scoped files, structured errors, bounded stdout/stderr, and published artifacts. Static imports are not initially promised. Transformation and source mapping must be tested against the pinned guest Bun version; the host Bun version is not guest evidence.</p>
+<h3>Three different persistence lifetimes</h3>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>State</th>
+<th>Lifetime</th>
+<th>Failure behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Explicit <code>state</code> object</td>
+<td>Healthy live worker only</td>
+<td>Lost on reset, hard cancellation, timeout or VM/worker failure</td>
+</tr>
+<tr>
+<td>Guest workspace</td>
+<td>Current configured guest volume</td>
+<td>Unexported files may be lost when the VM is destroyed</td>
+</tr>
+<tr>
+<td>Published artifacts</td>
+<td>Independent retention policy</td>
+<td>Only finalized, host-stored objects receive durability guarantees</td>
+</tr>
+</tbody>
+</table></div>
+<p>Top-level declarations are execution-local. A failed execution may already have changed <code>state</code>, written files, or produced side effects. Execution is <strong>not transactional</strong>. Resetting runtime memory and deleting retained artifacts are separate operations.</p>
+<h3>Limits and cancellation</h3>
+<p>Enforce source, frame, result, output, event-count, queue, session, CPU, memory, process, disk, artifact and time budgets. Bounds must hold before allocations, including inside third-party transports. A byte cap applied after an SDK buffers output is insufficient.</p>
+<p>Queued cancellation prevents dispatch. Running cancellation or timeout invalidates the session and destroys its VM. Cancellation is complete only after host-side termination confirmation. If cleanup cannot be confirmed, expose cleanup-pending and quarantine the capacity. Never interpret dropping a future as stopping a VM.</p>
+<p>Only one request is dispatched per session at a time; this does not guarantee absence of residual guest callbacks or subprocesses. Background services are unsupported. VM-wide quotas and idle deadlines remain active between requests, and late output is attributed conservatively.</p>
+<h3>Failure and recovery</h3>
+<p>Persist accepted execution identity before dispatch. Reusing an owner/operation/idempotency key with a different payload is an error. Client disconnects do not implicitly replay or cancel accepted work; polling returns authoritative status.</p>
+<p>After host restart, reconcile installation-owned resources before admission. Uncertain executions become <code>OutcomeUnknown</code>, never automatic retries or inferred successes. Hold an exclusive installation lock to prevent two control planes from reconciling each other's live resources.</p>
+<h3>Exclusions</h3>
+<p>No arbitrary package installation, public inbound networking, arbitrary host mounts, host commands, host credential inheritance, Docker socket, live-state migration, transparent in-memory recovery, or unsandboxed fallback. Helpers such as <code>workspace</code> and <code>artifacts</code> improve ergonomics but are not security boundaries.</p>
+<p>Expose implemented capabilities and exclusions through the eventual MCP environment description. Do not advertise target capabilities as currently available.</p>
+<p><strong>Separately proposed profile:</strong> <a href="#locus">BunBox as an external tool for Locus</a> adds authenticated cloud job and file contracts. It does not change this single-owner profile, the no-fallback rule or the local qualification gate.</p></section><section class="chapter" id="mcp"><p class="kicker">06 / BUNBOX</p><h2>MCP and ordinary agents</h2><p><strong>Status:</strong> Proposed compatibility specification. No MCP server is implemented. All profiles below are targets, not support claims. Keep the original single-owner VM qualification as the first BunBox milestone. Origin: <a href="#origin">Before story, BB-ORIGIN-001</a>.</p>
+<h3>One tool contract, independent transports</h3>
+<p>General agents can use BunBox for bounded JavaScript/TypeScript over selected inputs and retrieve structured results or authorized artifacts. Persistent Locus dots use the same operation model, but Locus durably owns the pending task, attributable intent, decisions and resumption. Aside from bounded local guest-session state documented in the execution contract, neither requires a permanent process. BunBox must not be embedded in UAR.</p>
+<p>Keep one Rust supervisor and durable job ledger behind typed <code>submit</code>, <code>status</code>, <code>cancel</code>, and <code>get_result</code> concepts. Authenticate and authorize each operation. <code>submit</code> accepts explicit input handles and bounds, and returns a stable job handle plus disposition; short jobs may return an already-completed result only after the same durable admission and result checks. Older clients can poll the ordinary status tool without a Tasks extension. An optional MCP task index links its negotiated task handle to the authoritative job. It cannot produce a second job, grant access, shorten cleanup, or erase independent job evidence. After disconnect, a qualified independent supervisor retains accepted work and its receipt. For a profile without that guarantee, report unsupported continuity or an unknown outcome unless independent evidence confirms completion or stop. Before submitting, regular harnesses persist a caller-generated intent key bound to authenticated owner/workspace and a canonical request digest. Recover by that key if the response and server handle are lost; same key with a different request conflicts. Incomplete reconciliation does not license another submission. A stdio child without an independent supervisor cannot claim it will survive closure; durable mode requires the stdio adapter to reconnect to the same scoped supervisor or an explicitly qualified host-managed equivalent.</p>
+<p>In local stdio, use a dedicated process and owner binding established by host configuration; log outside the protocol stream. A known local process does not authorize arbitrary user paths. For remote profiles, verify caller and workspace at the service boundary, validate request origins as applicable, use protected ingress, and bound ingress, buffering, connection lifetime and concurrency. Expose no anonymous execution endpoint. Do not use the MCP transport session, request, or task ID as a principal or durable job key. Reconnect or version fallback cannot resend an uncertain submit.</p>
+<h3>Compatibility and qualification matrix</h3>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>Target behavior</th>
+<th>Evidence required before claiming support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>STDIO</strong></td>
+<td>Official rmcp stdio, with the framing, lifecycle and supported capability negotiation of each enabled revision. Establish separate local caller, job, and guest session lifetimes.</td>
+<td>One named CLI/desktop client per advertised revision or identical verified behavior group; discovery, valid bounded tool call, disconnect/status, and demonstrable input/output bounds. Publishing a capability requires it to work on this profile.</td>
+</tr>
+<tr>
+<td><strong>Streamable HTTP, 2025 revisions</strong></td>
+<td>Single MCP endpoint, initialization and negotiation for each enabled 2025 revision. Qualify JSON and request-scoped SSE response behavior; explicitly document supported stateful and stateless modes. For modes that promise a session or resumable stream, exercise standalone GET SSE, session DELETE and event replay where applicable.</td>
+<td>Test 2025-03-26, 2025-06-18 and 2025-11-25 independently before advertising each. Reconnect verifies that protocol session and durable job are different, even if GET/replay isn't offered.</td>
+</tr>
+<tr>
+<td><strong>Streamable HTTP, 2026-07-28 profile</strong></td>
+<td>Current target documented by MCP: per-request metadata and stateless transport, JSON or request-scoped SSE. Do not require older session headers, standalone session GET/DELETE, or legacy event resume. Qualify optional notifications, subscriptions or Tasks separately only if offered.</td>
+<td>Verify exact normative status, rmcp release and actual client at adoption. Authority and job continuity must survive replacement of the HTTP replica.</td>
+</tr>
+<tr>
+<td><strong>Legacy two-endpoint HTTP+SSE, 2024-11-05</strong></td>
+<td>Optional separate compatibility endpoint/adapter with the old SSE channel and POST message endpoint. Not the same as an SSE response over Streamable HTTP. Keep the same core, tool contract, job ledger and policy; never downgrade modern ingress or trust a legacy session identifier.</td>
+<td>Qualify with a real SSE-only client behind authorized ingress. Use a maintained adapter compatible with current core or a separately isolated and audited older rmcp server transport pin if justified. Fail closed if the client cannot meet access or security requirements.</td>
+</tr>
+<tr>
+<td><strong>Negotiated MCP Tasks</strong></td>
+<td>Optional modern extension only on explicitly qualified profiles and versions. Deliberately distinguish legacy experimental Tasks from the newer extension. Preserve ordinary tools as compatibility path; scoped inspect remains authoritative.</td>
+<td>Assert acknowledgment, tool error and expiry never misreport execution, promotion or VM teardown. Verify typed cancellation and the independent host receipt across client replacement.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Before claiming any row, verify denied caller/scope, bounded oversized-input refusal, uncertain submit without retransmission or transport fallback, and repeat cancel/retrieve with fresh authorization and unchanged effect counts. The legacy edge must enforce the same policy independently of the transport.</p>
+<p>2024-11-05 STDIO is also a candidate protocol profile if requested in the enabled matrix, not a guarantee of a modern SDK pin. Record supported fallback and exact negotiated versions rather than interpreting “all” as unknown future revisions or promising all optional MCP capabilities. For unsupported versions or authentication modes, return a clear refusal with the supported alternatives; do not execute or retry via a weaker path. HTTP rollout is private/opt-in first, separate from VM proof and from cloud exposure approval.</p>
+<p>Current upstream <a href="https://github.com/modelcontextprotocol/rust-sdk#transports">rmcp transport documentation</a> lists stdio and Streamable HTTP, but explicitly excludes the old two-endpoint HTTP+SSE transport from current releases. The <a href="https://docs.rs/crate/rmcp/0.8.5/features#transport-sse-server">historical 0.8.5 feature listing</a> shows an older legacy transport option, not an approved dependency. At implementation adoption, verify release/tag, enabled feature graph, security and transport bounds for each selected adapter. Do not silently select the previously discussed rmcp pins or use version support as a proxy for real interoperability.</p>
+<p><strong>Sources:</strong> MCP transport specs for <a href="https://modelcontextprotocol.io/specification/2024-11-05/basic/transports">2024-11-05</a>, <a href="https://modelcontextprotocol.io/specification/2025-03-26/basic/transports">2025-03-26</a>, <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports">2025-06-18</a>, <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports">2025-11-25</a>, <a href="https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/transports/streamable-http.mdx">2026-07-28 Streamable HTTP</a>, and <a href="https://tasks.extensions.modelcontextprotocol.io/">MCP Tasks</a>. These are compatibility references, not implementation evidence.</p></section><section class="chapter" id="locus"><p class="kicker">07 / BUNBOX</p><h2>Locus external-tool profile</h2><p><strong>Status:</strong> Proposed cloud extension, not an adopted phase, supported deployment, or runtime qualification. The single-owner ARM64 Mac release contract and blocked Phase 0 remain unchanged. BunBox is not embedded in UAR and is not a dependency for the first Locus delivery.</p>
+<p>Origin: <a href="#origin">BB-ORIGIN-001</a>. Regular agents use the same core tool through the separate <a href="#mcp">MCP server specification</a>.</p>
+<h3>What the user gets</h3>
+<p>I ask my dot to compare two spreadsheets I selected. I can close the app, start other work, and come back to the same job and its result. The cloud profile must prove that replacing a UAR worker never runs my job twice. Another user's dot cannot open or cancel it. If I cancel, I can see whether execution has really stopped rather than mistaking an acknowledgment for cleanup.</p>
+<p>The first cloud workflow is a private, synthetic CSV comparison using bounded TypeScript and a single output. It needs no external network from the guest, no arbitrary dependencies, no model inference inside BunBox, and no file modification or distribution outside the approved result location.</p>
+<h3>Ownership</h3>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Owner</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Locus</td>
+<td>Owns the workspace, dot, work revision, approvals, stable effect identity, continuation and notification. Existing Temporal workflow owns durable timers and wait progression; no second scheduler.</td>
+</tr>
+<tr>
+<td>UAR</td>
+<td>Hydrates a replaceable run and invokes a typed external tool through the authorized policy/effect route. It neither links the BunBox runtime nor manages VMs.</td>
+</tr>
+<tr>
+<td>BunBox</td>
+<td>Owns durable job acceptance, runtime admission, execution, independent VM verification and private staged output. Its internal job and receipts survive a disconnected adapter or controller restart.</td>
+</tr>
+<tr>
+<td>Workspace file service</td>
+<td>Owns selected file access, durable user-visible artifact, retention and deletion. Independently authorizes reads and idempotent final save; a BunBox receipt isn't a file-access grant.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Locus's durable inbox and workflow awaken bounded UAR runs. One run can submit and park; a scoped completion event can wake a different run. Transport events are hints until confirmed with the owner of the record. On event loss, an authorized durable timer checks outstanding jobs without replaying submit. Retain current instructions, exact reviewed request identity and pointers to necessary records, not guest process memory, a session transcript, or credentials. Store a pending decision before asking the user and release workers while waiting. Use the existing outbox to announce meaningful, verified outcomes once; keep routine polling silent. This applies the <a href="https://claude.com/resources/articles/building-always-on-agents">Anthropic always-on pattern</a> without adopting Claude Managed Agents or changing who owns effects. Anthropic's <a href="https://code.claude.com/docs/en/agent-sdk/secure-deployment">secure deployment guidance</a> informs credential brokerage outside the execution environment. Its <a href="https://platform.claude.com/docs/en/managed-agents/webhooks">webhook guidance</a> illustrates why delivery alone is not an authoritative job ledger.</p>
+<h3>Proposed tool contract</h3>
+<p>These are logical operations, not claims that HTTP or MCP methods already exist. Keep the application contract independent of transport. The first cloud integration may use ordinary typed tool calls for submit, read status/result and cancel. Optional MCP Tasks support is negotiated and version-pinned. Neither a task ID nor an MCP session ID is a job identity; no task completion, expiry or cancellation status establishes BunBox's execution result or host teardown. See <a href="https://tasks.extensions.modelcontextprotocol.io/">MCP Tasks extension</a> and <a href="https://modelcontextprotocol.github.io/ext-tasks/specification/2026-07-28/tasks.html">2026-07-28 extension specification</a>. Qualify the exact client and server implementation; no automatic downgrade or alternate route for a job with an unknown outcome.</p>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Request and observable result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Submit</td>
+<td>Authenticate the calling workload and independently resolve workspace, dot and permitted operation from a scoped grant. Bind immutable input versions/digests, code digest, output policy, runtime profile, resource limits and work revision to one user intent ID. Persist acceptance and ownership before admitting work. Return a durable BunBox job ID or a qualified refusal, not completion.</td>
+</tr>
+<tr>
+<td>Inspect</td>
+<td>Look up by scoped job ID or original intent ID, with fresh read authorization. Return ownership-safe status, result/cleanup dispositions and receipt references. Receipts identify the exact job, worker attempt, runtime/image and policy versions, timestamps, measured usage, authorized output digest and independent teardown disposition as applicable. An unknown external ID grants no access and must not expose another workspace's job existence.</td>
+</tr>
+<tr>
+<td>Cancel</td>
+<td>Authenticate and recheck the right to cancel; record an idempotent cancel request against the exact job. Queued work must not start after cancellation wins admission. A running job remains cancellation requested or cleanup pending until verified stopped. No replay or output promotion while cancellation is unresolved.</td>
+</tr>
+<tr>
+<td>Retrieve / save result</td>
+<td>Read private immutable staging by authorized job, manifest and digest. Reject stale, revoked or mismatched work. Do not infer authority from a returned filename, output text, link, or UAR state. Repeat the same approved save by its stable action ID; do not create another user-visible file if a response is lost.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Before a consequential boundary, recheck current authority and the owner/revision fence, including VM admission, opening inputs, and output promotion. Revocation prevents new actions; it cannot recall already returned bytes. Record a completed effect honestly if it won the authorized commit race. Only currently authorized principals can poll, cancel or retrieve; qualified cleanup carries a narrow internal permission independent of the revoked user's result access. No bearer credential or general datastore/Drive mount in the guest. Select files via explicit grants and stage only pinned versions. Any future network access, new destination or broader scope needs its own qualification.</p>
+<h3>State, resources and failure recovery</h3>
+<ul>
+<li>One logical job per workspace, dot and stable Locus intent ID, checked against the immutable originating work identity. UAR and Temporal run/attempt IDs never form that key. The authoritative work record carries it through workflow rollover and executor replacement. Store a canonical request digest; same ID plus different digest conflicts. Do not disclose an old result on retry without current authorization. Keep the dedupe record or a tombstone through the declared replay window; reject expired retry keys rather than treating them as fresh submissions. A caller's reconnect, a new UAR session, a timer, and broker redelivery cannot create a new job.</li>
+<li>Persist VM creation intent, placement owner and fenced attempt before provisioning. Multiple controllers must agree through a durable ownership mechanism; a local installation lock alone cannot coordinate cloud replicas. If acceptance or VM creation is uncertain, reconcile authoritative inventory and receipts for that exact attempt. If reconciliation is incomplete, hold unknown and do not re-dispatch. No cross-service atomic commit or exactly-once claim for external systems.</li>
+<li>Keep separate execution, output and teardown states. A worker or guest exit message does not prove resource release. The host independently confirms stop and cleanup; otherwise quarantine the allocation and count its capacity. Cancellation can rule out promotion even if code computed output. Staged outputs are bounded, private, not automatically consumable and expire according to policy. Treat all inputs and outputs as data, never tool instructions. Verify the declared media type, row/schema and size limits and spreadsheet-safe export as well as byte integrity.</li>
+<li>Use job-bounded sandbox scratch space; don't promise transparent guest state recovery or reuse one guest across principals. Private Drive refers to the dot's authorized storage, not a mounted Google account. Stage authorized source versions and verify an output manifest through the host. For this first profile, hold promotion until cleanup is confirmed, then recheck the current authorization and exact destination at the controlled save. Store result retention and deletion separately from VM lifetime. Serialize cancellation and the final save at one durable Locus promotion boundary: cancel that wins before the save is admitted revokes the save; once a save is in flight with an unknown outcome, hold and reconcile instead of claiming either winner. If the file service confirms the already authorized save committed, keep it and report that cancellation came too late; do not duplicate or silently retract it. A pending cancellation can close without promotion only after the file service confirms the in-flight save was terminally rejected or fenced against any later commit. A negative read alone is insufficient. Route every authorized cancellation path through the same promotion decision. Protect this rule with a fenced save intent and idempotent file-service receipt, not an assumed cross-service transaction.</li>
+<li>Declare and measure per-workspace and host quotas for compute, memory, execution and queue age, scratch storage and outputs. Keep the durable queue outside disposable workers. UAR action capacity, BunBox VM capacity and Kubernetes autoscaling are distinct; only one owner meters each resource. Unqualified tenant pooling, runtime profiles or placement fail closed. A local Mac pass cannot qualify Linux or a shared cluster. Use <a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/">Kubernetes multi-tenancy guidance</a> for the deployment boundary; a pod or language runtime alone is not an isolation guarantee.</li>
+</ul>
+<h3>User-level proof and rollout</h3>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Acceptance outcome and evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local foundation</td>
+<td>Complete the existing approved transport and real ARM64 Mac VM gate before claiming execution, containment or cleanup. Verify the actual host/runtime independently.</td>
+</tr>
+<tr>
+<td>Cloud executor</td>
+<td>Pin and qualify a real hosted Linux profile on its intended infrastructure. Prove scoped placement, isolation, limits and independent teardown on that profile before tenant sharing. No host-process fallback.</td>
+</tr>
+<tr>
+<td>Persistent dot</td>
+<td>Submit the synthetic CSV job, lose its acknowledgment and replace the UAR worker. Recover the same scoped job and verified artifact without a second execution or duplicate promotion. A second synthetic workspace cannot inspect, cancel or retrieve it. Read BunBox and the file service independently.</td>
+</tr>
+<tr>
+<td>Provisioning recovery</td>
+<td>Lose the BunBox controller after provisioning but before allocation receipt. Reconcile only the exact fenced allocation. If inventory is incomplete, show unknown, quarantine capacity and admit no replacement VM or promotion.</td>
+</tr>
+<tr>
+<td>Cancellation and revocation</td>
+<td>In the same workflow, make a repeat user operation with a fresh intent. After cancel is accepted, delay host confirmation and replace the client. The user sees pending cleanup, no promotion and no new VM. Final cancellation requires durable host confirmation even if the transport task expired. Revoke a queued grant or pre-save permission and prove no subsequent execution/save crosses that boundary. Exercise both cancel-before-save and committed-save-with-lost-ack orderings, and verify a delayed fenced save cannot commit after cancellation. Include harmless formula-like and instruction-like cells and verify safe export without treating them as directives.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Run ordinary tool-free Locus continuity first. Then qualify this opt-in capability against the exact builds with a fake business data fixture. Scope choices still open: supported hosted runtime, transport/version, recovery windows, retention/data locality, latency and spend limits. No cloud installation, tenant access, or unrestricted code-execution route is authorized by this proposal.</p></section><section class="chapter" id="threat"><p class="kicker">08 / BUNBOX</p><h2>Isolation and threat boundaries</h2><h3>Boundary</h3>
+<p>Untrusted: submitted code, the Bun process, guest files, package contents, guest-generated events and results. Trusted: host OS/hypervisor, Microsandbox/runtime dependencies, Rust supervisor, host parsers, policy enforcement, storage/extraction, and authentication/ownership enforcement.</p>
+<p>Guest messages can lie. Execution IDs, generations and sequence validation reject malformed or stale messages; they do not authenticate the worker against hostile code in the same VM. Guest events cannot authorize host paths, raise limits, reset host deadlines or prove teardown.</p>
+<h3>Mandatory controls</h3>
+<ul>
+<li>One microVM per session, no host-process fallback.</li>
+<li>Explicit network denial; the upstream default is not offline.</li>
+<li>No host secrets, control sockets or general host mounts inside guests.</li>
+<li>Bounded allocations through the entire ingress path, not only BunBox's final queue.</li>
+<li>Separate cancellation/control path that cannot be starved by output.</li>
+<li>Independently confirm stop/kill and persisted-resource removal.</li>
+<li>Record creation intent before provisioning; discover resources even if creation loses its reply.</li>
+<li>Scope recovery to immutable installation/resource identities, scan all enumeration pages, and never remove unrelated resources.</li>
+<li>Quotas remain active after guest completion; untrusted serialization runs inside the guest budget.</li>
+<li>Artifact destinations are host-generated opaque identities. Stream with quotas and race-resistant extraction; reject special files and path escapes.</li>
+</ul>
+<h3>Known blockers</h3>
+<p>Microsandbox 0.7.2's high-level execution event queue is unbounded; <code>collect()</code> accumulates output. The streaming path does not enforce its supplied timeout. Stock rmcp 3.4.0 stdio decoding also needs explicit message length limits. See <code>compatibility.md</code> for release-pinned evidence.</p>
+<p>The repository therefore does not link the SDK, download a new runtime, create VMs, or accept arbitrary code yet. Pure framing tests cannot certify the virtualization boundary. Fixing one channel in a dependency is not enough unless all upstream buffering and cancellation behavior have also been verified.</p>
+<h3>Testing safety</h3>
+<p>Start with benign fixtures. Adversarial guest fixtures run only after containment and independent termination are proven, with small budgets and a host watchdog. Never run memory/disk/process exhaustion tests directly on the host. Host-side malformed-frame tests use tiny bounded in-memory inputs.</p>
+<p>A production release requires real isolation, recovery, cleanup, and soak evidence. Rust memory safety alone is not a sandbox guarantee.</p>
+<h3>Proposed shared-service boundary</h3>
+<p>The <a href="#locus">external-tool profile</a> adds per-operation authorization, workspace-scoped jobs and artifacts, fenced promotion and independent cloud isolation. Every <a href="#mcp">MCP transport profile</a>, including legacy compatibility, must enforce the same policy. Phase 0 local evidence cannot qualify those boundaries.</p></section><section class="chapter" id="transport"><p class="kicker">09 / BUNBOX</p><h2>Transport decision</h2><p>Status: source-reviewed proposal, not implemented or runtime-verified.</p>
+<p>Release examined: Microsandbox 0.7.2, commit <code>60d4dc8a436fb9365491567ec21d073e924e3c6d</code>.</p>
+<h3>Recommendation</h3>
+<p>Keep the SDK for VM lifecycle and bypass its high-level execution mapper using the public generic raw agent client. Use one dedicated connection per active session/execution with bounded global concurrency. This avoids maintaining a fork merely to remove one unbounded queue, at the cost of owning more protocol integration and decoding validation.</p>
+<p>Do not confuse <code>microsandbox::agent::AgentClient</code> (the SDK wrapper around the optimized client) with <code>microsandbox_agent_client::AgentClient</code> (the configurable generic protocol client).</p>
+<p>Released APIs to verify in a compile-only integration:</p>
+<ul>
+<li><code>microsandbox::agent::AgentClient::socket_path(name)</code></li>
+<li>Generic <code>AgentClient::connect_with</code> and <code>ConnectOptions::limits</code></li>
+<li><code>ClientLimits</code>: frame size, in-flight requests, queued writes/responses, buffered bytes, incomplete-frame timeout and request timeout</li>
+<li><code>stream_raw</code> / <code>stream_raw_with</code>, and <code>RawStream::into_parts</code></li>
+<li><code>Client::close</code> for local task shutdown, <strong>not</strong> remote termination</li>
+</ul>
+<h3>Why a bounded SDK event channel alone is insufficient</h3>
+<p>The SDK mapper has an unbounded queue and buffered <code>collect()</code> grows vectors. Upstream optimized queues are bounded by counts but decoded payload copies also consume memory. The normal guest's 4-KiB output chunks are not a hostile-peer wire guarantee. Shared-memory arenas are another separately budgeted resource.</p>
+<p>The generic client's router checks frame length and reserves its shared byte budget before allocating frame bodies. However:</p>
+<ol>
+<li>Agent handshake uses the ordinary four-MiB codec before configured routing limits apply.</li>
+<li>CBOR decoding allocates envelope and payload vectors; malicious lengths/nesting require a dedicated allocation/complexity review and adversarial tests.</li>
+<li>Transport byte accounting excludes returned data retained by application code and decoded copies.</li>
+<li>Full response queues can stall inbound processing. Shared inbound/outbound budgets can delay sending a kill signal.</li>
+</ol>
+<p>The custom framing helper already in BunBox is a compatibility primitive, <strong>not</strong> this upstream wire protocol or a fix for these issues.</p>
+<h3>Cancellation design to prove</h3>
+<p>Drain and discard output independently from client consumption; signal cancellation concurrently with draining. Bound signal delivery and terminal wait. Guest <code>Exited</code> may arrive only after output drains, so it cannot be the sole teardown authority. Escalate through separately controlled whole-VM lifecycle operations and verify stopped/removed identity. If confirmation fails, expose cleanup-pending and keep capacity charged. Dropping/closing the connection does not establish guest termination.</p>
+<h3>Installation boundary</h3>
+<p>For a future dependency experiment, tagged source supports:</p>
+<pre><code class="language-toml">microsandbox = { version = &quot;=0.7.2&quot;, default-features = false, features = [&quot;local&quot;] }
+</code></pre>
+<p>Do not enable <code>download-binaries</code> or <code>embed-binaries</code>. Audit the resolved feature graph for feature unification, and separately approve runtime provisioning. A crate pin alone does not verify the installed binary/library version. Use isolated build/runtime/config roots and preserve the old <code>msb</code> installation.</p>
+<h3>Required experiment tests</h3>
+<p>Oversized prefixes; incomplete frames; malicious CBOR lengths/nesting; handshake limits; paused consumers; stdout/stderr floods; cancellation with full queues; lost terminal events; VM termination independently from the exec stream. No hostile guest test until benign VM boot and hard termination work.</p>
+<h3>Release-pinned source map</h3>
+<p>All paths below are relative to <a href="https://github.com/superradcompany/microsandbox/tree/60d4dc8a436fb9365491567ec21d073e924e3c6d">the examined commit</a>:</p>
+<ul>
+<li><code>sdk/rust/lib/sandbox/exec.rs</code>: unbounded mapper, collection, ignored streaming timeout.</li>
+<li><code>sdk/rust/lib/agent/client.rs</code>: wrapper identity and local socket path.</li>
+<li><code>packages/agent-client/rust/lib/client.rs</code>: generic public alias.</li>
+<li><code>packages/protocol-client/rust/lib/options.rs</code>: configurable transport limits.</li>
+<li><code>packages/protocol-client/rust/lib/router.rs</code>: frame preallocation budget and dispatch backpressure.</li>
+<li><code>packages/agent-client/rust/lib/protocol.rs</code>: handshake codec exception.</li>
+<li><code>crates/protocol/lib/codec.rs</code>, <code>message.rs</code>: framing and CBOR allocation boundaries.</li>
+<li><code>crates/agentd/lib/session.rs</code>: guest output budgets and terminal ordering.</li>
+<li><code>sdk/rust/build.rs</code>, <code>sdk/rust/lib/runtime/spawn.rs</code>: installation feature gate and runtime resolution.</li>
+</ul></section><section class="chapter" id="compatibility"><p class="kicker">10 / BUNBOX</p><h2>Pinned compatibility findings</h2><h3>Status</h3>
+<p><strong>Blocked, not an interpreter.</strong> Source review and host prerequisites are recorded; no Bun microVM, hostile-workload containment, guest image, or teardown behavior has been validated. The preflight command reports these known blockers, not a live installation health check.</p>
+<p>Local observations: ARM64 macOS 26.7.1 / 25G309, <code>kern.hv_support = 1</code>, Rust/Cargo 1.98.1, host Bun 1.4.2, installed <code>msb 0.2.6</code>. CLI presence and hypervisor capability are necessary but insufficient.</p>
+<h3>Exact release findings</h3>
+<div class="table-scroll" role="region" aria-label="Scrollable specification table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Evidence</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Microsandbox 0.7.2</td>
+<td>Published, non-yanked in Cargo sparse index</td>
+<td>Research candidate only; not linked</td>
+</tr>
+<tr>
+<td>Installed msb 0.2.6</td>
+<td>Legacy tag's SDK is 0.1.2, HTTP server architecture</td>
+<td>Preserve installation; do not mix APIs</td>
+</tr>
+<tr>
+<td>rmcp 3.4.1</td>
+<td>Absent from checked registry</td>
+<td>Unresolved requested pin</td>
+</tr>
+<tr>
+<td>rmcp 3.4.0</td>
+<td>Published, non-yanked; official matching release</td>
+<td>Proposed replacement, not installed or approved</td>
+</tr>
+<tr>
+<td>Bun 1.4.2</td>
+<td>Host CLI</td>
+<td>Guest version/image unverified</td>
+</tr>
+</tbody>
+</table></div>
+<p>Registry references: <a href="https://index.crates.io/mi/cr/microsandbox">microsandbox</a>, <a href="https://index.crates.io/rm/cp/rmcp">rmcp</a>. Registry API returned HTTP 403; official sparse-index reads succeeded. GitHub repository and code searches were performed before implementation.</p>
+<h3>Blocking source findings</h3>
+<ol>
+<li><a href="https://github.com/superradcompany/microsandbox/blob/v0.7.2/sdk/rust/lib/sandbox/exec.rs">Microsandbox 0.7.2 execution</a>: <code>ExecHandle</code> consumes an unbounded event receiver. The mapper forwards events into an unbounded channel; <code>collect()</code> accumulates output. Streaming ignores the supplied timeout. A bounded queue outside the SDK cannot fix hidden allocations.</li>
+<li><a href="https://github.com/modelcontextprotocol/rust-sdk/blob/rmcp-v3.4.0/crates/rmcp/src/transport/async_rw.rs">rmcp 3.4.0 stdio</a>: stock reads need length bounds; the codec's bounded constructor must be explicitly configured and tested, along with outbound limits.</li>
+<li><a href="https://github.com/superradcompany/microsandbox/blob/v0.7.2/sdk/rust/build.rs">SDK build script</a> and <a href="https://github.com/superradcompany/microsandbox/blob/v0.7.2/sdk/rust/Cargo.toml">features</a>: default <code>download-binaries</code> can install runtime components during compilation. Do not enable it casually or target the existing runtime home.</li>
+</ol>
+<p>A candidate SDK integration must isolate <code>MSB_HOME</code> at build and runtime, isolate <code>MSB_CONFIG_PATH</code>, explicitly select the local backend, and audit resource paths. Coexistence with the legacy installation remains untested. Runtime installation needs separate approval through the managed CLI route; no shell installer or download-and-run shortcut.</p>
+<h3>Actual Phase 0 exit gate (all still outstanding)</h3>
+<ul>
+<li>[ ] Select and audit an end-to-end bounded transport, including SDK/protocol buffers and event chunk sizes.</li>
+<li>[ ] Verify an independent termination path cannot be starved by stdout backpressure.</li>
+<li>[ ] Install approved project-isolated runtime components without modifying legacy msb.</li>
+<li>[ ] Pin a Linux ARM64 Bun image by digest and capture runtime identities.</li>
+<li>[ ] Create one VM through Rust, run benign Bun input, check duplex I/O, stderr, EOF and exit.</li>
+<li>[ ] Explicitly disable guest networking and verify denial, including DNS and IPv6 where supported.</li>
+<li>[ ] Verify resource limits; distinguish vCPUs from CPU quota, guest RAM from host overhead, and volume growth from disk size.</li>
+<li>[ ] Observe stop/kill completion, remove persisted resources, and independently enumerate all pages to confirm cleanup.</li>
+<li>[ ] Test lost creation reply, host crash and failed cleanup without touching unrelated resources.</li>
+</ul>
+<p>Use a narrow reviewed SDK patch or a supported lower-level bounded API only after examining the whole transport. Do not approximate this gate with mocks or host-process execution. If no acceptable path exists, request a backend decision rather than weakening the contract.</p>
+<h3>References to reuse</h3>
+<ul>
+<li><a href="https://github.com/superradcompany/microsandbox/blob/v0.7.2/sdk/rust/tests/stdin.rs">Released SDK stdin tests</a></li>
+<li><a href="https://github.com/superradcompany/microsandbox/blob/v0.7.2/docs/sdk/rust/networking.mdx">Network configuration</a></li>
+<li><a href="https://github.com/superradcompany/microsandbox/blob/microsandbox-v0.2.6/sdk/rust/Cargo.toml">Legacy SDK manifest</a></li>
+<li><a href="https://github.com/modelcontextprotocol/rust-sdk/blob/rmcp-v3.4.0/examples/servers/src/calculator_stdio.rs">RMCP stdio example</a></li>
+</ul></section><section class="chapter" id="implementation"><p class="kicker">11 / BUNBOX</p><h2>Staged implementation plan</h2><p>Checked items indicate completion of that specific item only. Local-code verification does not imply VM readiness. See <code>verification.md</code> for commands and results.</p>
+<h3>Baseline</h3>
+<ul>
+<li>[x] Establish the single-crate workspace: <code>bunbox-sandbox</code> at <code>crates/sandbox</code>.</li>
+<li>[x] Record target semantics in <code>execution-contract.md</code> and controls in <code>threat-model.md</code>.</li>
+<li>[x] Record Mac-first sequencing and current limitations in the five planning documents.</li>
+<li>[x] Complete the dependency-free, fail-closed preflight CLI.</li>
+<li>[x] Complete preallocation-bounded length-prefix framing.</li>
+<li>[x] Validate CLI/framing: 9 integration tests, formatting, Clippy, compilation, 92.31% line coverage.</li>
+</ul>
+<h3>Phase 0 — BLOCKED: compatibility and bounded transport</h3>
+<ul>
+<li>[x] Record Microsandbox 0.7.2 unbounded event queue and ignored streaming timeout blockers.</li>
+<li>[x] Record that legacy msb 0.2.6 stays untouched.</li>
+<li>[x] Record rmcp 3.4.1 absence and 3.4.0 candidate-not-approved status.</li>
+<li>[ ] Select and explicitly approve a pinned runtime/transport solution; no silent substitution.</li>
+<li>[ ] Verify all upstream buffers, parsing allocations, output collection, and event-count limits.</li>
+<li>[ ] Prove deadline enforcement and cancellation independent of output/backpressure.</li>
+<li>[ ] Review native build/runtime setup with isolated <code>MSB_HOME</code> and no automatic downloads.</li>
+<li>[ ] Record evidence and approval before changing Phase 0 status or linking the SDK.</li>
+</ul>
+<h3>Phase 0 continued — real Mac VM gate, before worker/storage/MCP</h3>
+<ul>
+<li>[ ] Provision a benign VM with an approved pinned runtime in an isolated test installation.</li>
+<li>[ ] Verify explicit network denial, mount/secret exclusion, and enforced VM-wide quotas.</li>
+<li>[ ] Independently confirm termination and persisted-resource removal with a host watchdog.</li>
+<li>[ ] Test lost creation replies, scoped discovery, full enumeration, and cleanup quarantine.</li>
+<li>[ ] Record ARM64 Mac host/runtime evidence; keep other platforms unsupported until tested.</li>
+<li>[ ] Pass and review this gate before starting the execution worker or durable storage.</li>
+</ul>
+<h3>Phase 1 — execution worker, after real VM gate</h3>
+<ul>
+<li>[ ] Pin guest Bun and verify JS/TS transformation, source mapping, async wrapper, and imports.</li>
+<li>[ ] Implement explicit live state, scoped workspace, bounded output/results, and structured errors.</li>
+<li>[ ] Serialize dispatch; validate execution IDs, generations, sequences, and conservative late output.</li>
+<li>[ ] Validate timeout/cancellation invalidation, residual work quotas, and cleanup-pending behavior.</li>
+<li>[ ] Exercise adversarial guest fixtures only after containment and teardown proof.</li>
+</ul>
+<h3>Phase 2 — durable service and artifact lifecycle</h3>
+<ul>
+<li>[ ] Add exclusive installation ownership/locking and durable creation/acceptance intent.</li>
+<li>[ ] Enforce idempotency payload matching; never automatically retry uncertain accepted work.</li>
+<li>[ ] Reconcile restarts to <code>OutcomeUnknown</code> where appropriate and expose authoritative polling.</li>
+<li>[ ] Implement bounded, race-resistant artifact extraction and independent retention/deletion.</li>
+<li>[ ] Validate crashes, disconnects, quota exhaustion, quarantine, and retained-artifact behavior.</li>
+</ul>
+<h3>Phases 3–5 — MCP, hardening and release readiness</h3>
+<ul>
+<li>[ ] Approve a specific MCP dependency only after bounded stdio ingress review.</li>
+<li>[ ] Add ownership validation and truthful implemented-capability/exclusion descriptions.</li>
+<li>[ ] Validate transport disconnects without implicit replay or cancellation.</li>
+<li>[ ] Complete real isolation, recovery, cleanup, and soak evidence before release claims.</li>
+<li>[ ] Document remaining limitations; add Linux/Windows only through independent real-host gates.</li>
+</ul>
+<h3>Proposed MCP compatibility qualification</h3>
+<ul>
+<li>[ ] Validate ordinary agent workflow over bounded rmcp STDIO.</li>
+<li>[ ] Qualify each advertised Streamable HTTP version and mode.</li>
+<li>[ ] Separately qualify authorized two-endpoint HTTP+SSE compatibility; see the <a href="#mcp">MCP matrix</a>.</li>
+</ul>
+<h3>Later cloud integration (proposed; not an active gate)</h3>
+<ul>
+<li>[ ] Qualify hosted runtime and independent containment/cleanup for its intended placement.</li>
+<li>[ ] Prove the external job, scoped file, cancellation and receipt behavior in the <a href="#locus">Locus external-tool specification</a>.</li>
+<li>[ ] Enable only for approved dots after the two-workspace continuity and access checks; no UAR embedding or first-release dependency.</li>
+</ul></section><section class="chapter" id="technical"><p class="kicker">12 / BUNBOX</p><h2>Technical design notes</h2><h3>Verified repository shape and scope</h3>
+<ul>
+<li>Workspace member: <code>crates/sandbox</code>, package <code>bunbox-sandbox</code>, binary <code>bunbox</code>.</li>
+<li>Workspace declares Rust edition 2024 and minimum Rust 1.98.</li>
+<li>The package currently declares no external dependencies.</li>
+<li>Implemented foundation covers fail-closed preflight and bounded length-prefix framing.</li>
+<li>Compilation, formatting, Clippy, and 9 integration tests passed; line coverage is 92.31%.
+  See <code>verification.md</code> for commands and limitations.</li>
+<li>No SDK link, VM, interpreter, durable storage, or MCP endpoint exists at this stage.</li>
+</ul>
+<h3>Compatibility stop conditions</h3>
+<p>Phase 0 is <strong>BLOCKED</strong>. Released Microsandbox 0.7.2 has an unbounded high-level
+event queue; collection accumulates output, and streaming ignores its supplied timeout.
+An application-side byte cap cannot repair allocations already made by that transport.
+Any replacement or patch requires release-pinned review of the full ingress/control path.
+Legacy msb 0.2.6 is not the approved runtime and must remain untouched.
+rmcp 3.4.1 is absent; 3.4.0 is an unapproved candidate with stdio length-bound work needed.
+Do not silently substitute versions or invent API compatibility.</p>
+<h3>Safe build setup</h3>
+<ol>
+<li>Check the installed compiler against the manifest requirement before requesting a build.</li>
+<li>Review manifests, lockfile if present, features, and build scripts before adding dependencies.</li>
+<li>Keep the initial crate dependency-free; adding runtime dependencies is a separate decision.</li>
+<li>Do not enable automatic <code>download-binaries</code> behavior or run an installer as a build fix.</li>
+<li>Treat downloaded runtimes/images as explicit, provenance-checked artifacts, not incidental setup.</li>
+<li>Record exact toolchain/dependency/runtime versions when validation is actually performed.</li>
+</ol>
+<h3>Safe runtime setup — future approved probe only</h3>
+<ul>
+<li>Assign <code>MSB_HOME</code> explicitly to a dedicated BunBox test installation before runtime tooling.</li>
+<li>Do not reuse, migrate, overwrite, or clean the legacy runtime home.</li>
+<li>Isolation of <code>MSB_HOME</code> is configuration separation, not proof of guest containment.</li>
+<li>Resolve build-time and runtime paths independently; do not assume an environment variable
+  alone controls every download location or native-library lookup.</li>
+<li>Review the pinned runtime's supported Mac configuration before any launch.</li>
+<li>Use benign fixtures, explicit network denial, no secrets/general host mounts, and tiny budgets.</li>
+<li>Establish a host watchdog and independently confirmed stop/resource removal first.</li>
+<li>Leave adversarial guest fixtures disabled until containment and teardown are proven.</li>
+</ul>
+<h3>Validation and diagnostics</h3>
+<p>Local tests should cover prefix rejection before allocation, truncation, valid boundary frames,
+fail-closed CLI behavior, and refusal to accept execution. They do not certify virtualization.
+Later real-VM tests must cover output floods, timeouts, stale events, partial provisioning,
+restart reconciliation, and cleanup failures under controlled budgets.
+Never run memory/disk/process exhaustion fixtures directly on the host.
+Report missing prerequisites as blockers; report uncertain accepted outcomes as <code>OutcomeUnknown</code>.
+Unconfirmed teardown is cleanup-pending with quarantined capacity, never a success shortcut.</p>
+<h3>Sources of truth</h3>
+<p><code>execution-contract.md</code> and <code>threat-model.md</code> govern all implementation decisions.
+<code>task-list.md</code> tracks gates; updating a checklist requires evidence, not merely new code.</p></section><section class="chapter" id="verification"><p class="kicker">13 / BUNBOX</p><h2>Existing verification and limits</h2><h3>Completed local-code checks</h3>
+<ul>
+<li><code>cargo generate-lockfile --offline</code> — passed; no external crates.</li>
+<li><code>cargo fmt --all</code> and <code>cargo fmt --all -- --check</code> — passed for initial implementation; final added tests formatted again.</li>
+<li><code>cargo clippy --workspace --all-targets --locked --offline -- -D warnings</code> — passed, including final test additions.</li>
+<li><code>cargo test --workspace --locked --offline --test '*'</code> — initial 7 integration tests passed.</li>
+<li><code>cargo llvm-cov --workspace --locked --offline --test '*' --fail-under-lines 80</code> — initially failed coverage gate at 73.63%; after transport-error and CLI-help tests, <strong>9 integration tests passed and line coverage reached 92.31%</strong> (86.96% regions).</li>
+<li><code>cargo run --locked --offline -p bunbox-sandbox --bin bunbox -- preflight</code> — expected exit <strong>2</strong>, reporting blocked state. This was not a VM execution.</li>
+</ul>
+<p>Coverage command automatically installed <code>llvm-tools-preview</code> into Rust 1.98.1. This toolchain side effect was not intended and was disclosed. No Microsandbox runtime, guest image, service, or SDK was installed.</p>
+<p>Tests exercise public framing APIs and the compiled CLI process. They cover binary round trips, clean versus truncated EOF, fragmented reads, interrupted reads, preallocation oversized rejection, invalid limits, empty frames, transport error propagation, help, blocked preflight, and rejected execution requests.</p>
+<h3>Independent review</h3>
+<p>Read-only Rust/security review found no verified correctness or security defects within this limited scope. It identified stale planning statuses, which were corrected. The review inspected the initial seven-test implementation; two additional integration tests were subsequently added for coverage without changing production code. The reviewer did not rerun tests.</p>
+<h3>Explicitly not validated</h3>
+<p>VM boot, guest Bun semantics, isolation, resource/network enforcement, SDK byte bounds, cancellation, teardown, crash reconciliation, artifacts, MCP, Windows/Linux, fuzzing, soak tests, benchmarks and release builds remain untested. The stock SDK transport issue still blocks Phase 0.</p>
+<p>The 92.31% number applies only to this small foundation, not the planned interpreter. No claim of production readiness or completion of the playbook is made.</p>
+<h3>Workflow note</h3>
+<p>Tests were authored before implementation, but no pre-implementation RED run was performed: the loaded Rust workspace workflow calls for batched integration verification at a completed code boundary. Do not report a RED/GREEN cycle as observed.</p></section><section class="chapter" id="baseline"><p class="kicker">14 / BUNBOX</p><h2>Project baseline and operator commands</h2><p>Rust-managed Bun code interpreter with a Microsandbox VM boundary, following the BunBox Playbook.</p>
+<p><strong>Current status: Phase 0 foundation; execution blocked.</strong> This repository does not yet execute code, start VMs, or expose MCP tools. It deliberately has no unsandboxed fallback.</p>
+<h3>Intended use</h3>
+<p><a href="#origin">Read the BunBox Origin story</a>. Regular agents will be able to use BunBox as a separately qualified <a href="#mcp">rmcp tool server</a>, with STDIO and Streamable HTTP profiles. The old two-endpoint HTTP+SSE protocol requires its own compatibility adapter; it is not a feature of modern rmcp. No transport is implemented today.</p>
+<h3>How it fits Locus and UAR</h3>
+<p>BunBox is a proposed <strong>external, opt-in tool</strong> for persistent Locus dots. Locus owns continuity and the private work state, UAR invokes a scoped tool, and BunBox runs only that job in an isolated VM. The dot can wait without holding a worker and recover a verified artifact by the same job ID. BunBox must not be embedded in UAR or required for the first Locus release.</p>
+<p>See the <a href="#locus">external-tool specification</a> for the proposed cloud API, permissions, recovery, and first user journey. The first BunBox milestone remains a single-owner ARM64 Mac VM; it does not qualify cloud or shared use.</p>
+<h3>What exists</h3>
+<ul>
+<li>Dependency-free Rust workspace pinned to Rust 1.98.1.</li>
+<li><code>bunbox preflight</code>: reports known compatibility blockers, exiting <strong>2</strong> until resolved. This is a static readiness report, not a live runtime health check.</li>
+<li>Bounded four-byte length-prefix framing with a hard one-MiB payload ceiling; oversized announcements are rejected before payload reads/allocations.</li>
+<li>Public API and CLI integration tests.</li>
+<li>Execution contract, threat model, version research and phased implementation documents.</li>
+</ul>
+<p>The framing helper is synchronous and has no timeout. It does not fix unbounded buffering inside Microsandbox or constitute a production transport.</p>
+<h3>Run</h3>
+<pre><code class="language-sh">cargo run --locked -p bunbox-sandbox --bin bunbox -- preflight
+# Expected exit status: 2 (blocked), not an installation failure.
+</code></pre>
+<h3>Verify</h3>
+<pre><code class="language-sh">cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked --test '*'
+</code></pre>
+<p>Tests cover local framing and executable behavior only. They do not establish VM isolation, cleanup, guest language semantics, or production readiness. No external Rust dependencies are currently linked.</p>
+<h3>License</h3>
+<p>BunBox is open source under the <a href="#license">MIT License</a>. Third-party assets and dependencies retain their own licenses.</p>
+<h3>Next gate</h3>
+<p>Resolve the released Microsandbox SDK's unbounded event queue and validate a separate termination path. Then approve isolated runtime provisioning, run real Bun-in-VM compatibility tests, and advance to the execution worker. Preserve the existing <code>msb 0.2.6</code> installation. Do not use guessed SDK calls or automatically download runtimes during builds.</p>
+<p>See <a href="#compatibility">compatibility evidence</a>, <a href="#execution">execution contract</a>, <a href="#threat">threat model</a>, and <a href="#implementation">task list</a>.</p></section><section class="chapter" id="license"><p class="kicker">15 / BUNBOX</p><h2>BunBox project license</h2><p>MIT License</p>
+<p>Copyright (c) 2026 BunBox contributors</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</p></section><footer><a href="#main">Back to top</a><p>KnowMe document preview · BunBox project: <a href="#license">MIT</a> · Viewer dependencies, fonts and brand assets are separate</p></footer></main></body></html>

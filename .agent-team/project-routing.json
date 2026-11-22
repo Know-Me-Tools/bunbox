@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "activeTeam": "bunbox-foundations",
+  "manifest": ".agent-team/bunbox-foundations/team.json",
+  "target": "codex",
+  "nativeDefinitions": [
+    ".codex/agents/phase_lead.toml",
+    ".codex/agents/runtime_supervisor.toml",
+    ".codex/agents/mcp_compatibility.toml",
+    ".codex/agents/locus_integration.toml",
+    ".codex/agents/value_authority_reviewer.toml"
+  ],
+  "instructionFiles": [
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "delegation": "native-definitions",
+  "limitations": [
+    "Native definition presence is not live invocation evidence. The active harness owns permissions, models, concurrency and delegation.",
+    "When delegation is unavailable, use selected role instructions sequentially and report it; builder-context review is not independent.",
+    "Zed external ACP agents use their native configuration; Zed parallel threads are not an automatic delegation API."
+  ]
+}

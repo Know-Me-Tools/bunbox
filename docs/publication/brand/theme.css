@@ -1,0 +1,3 @@
+html[data-brand="knowme"]{--canvas:#0B0F14;--surface:#0F1620;--fg:#E8EDF3;--muted:#A7B0BC;--accent:#FF6A3D;--heading:"Space Grotesk",system-ui;--body:Roboto,system-ui;--mono:monospace;--code-bg:#0F1620;--code-fg:#E8EDF3;}
+html[data-brand="knowme"][data-mode="light"]{--canvas:#F7F7F8;--surface:#FFFFFF;--fg:#0B0F14;--muted:#4B5563;--accent:#C8431F;--code-bg:#FFFFFF;--code-fg:#0B0F14;color-scheme:light;}
+html[data-brand="knowme"][data-mode="dark"]{--canvas:#0B0F14;--surface:#0F1620;--fg:#E8EDF3;--muted:#A7B0BC;--accent:#FF6A3D;--code-bg:#0F1620;--code-fg:#E8EDF3;color-scheme:dark;}

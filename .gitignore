@@ -1,3 +1,8 @@
 /target/
 /.bunbox/
 .DS_Store
+
+# prometheus-context-bootstrap
+.prometheus/.writer.lock
+.prometheus/.review-pending
+.claude/settings.json.bak.*

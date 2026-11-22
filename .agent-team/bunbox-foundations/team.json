@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "bunbox-foundations",
+  "outcome": "Deliver one bounded job from authorized inputs to a useful independently readable result without broad host access; preserve the blocked Phase 0 gate and qualify ordinary MCP and persistent Locus separately.",
+  "scope": "project",
+  "harness": "codex",
+  "roles": [
+    {
+      "id": "phase-lead",
+      "description": "Own the BunBox value, scope, user decisions, and handoff",
+      "prompt": "Read docs/ORIGIN.md (BB-ORIGIN-001), docs/task-list.md and active canonical KBD context. Keep authoring and acceptance separate. Preserve current blocked Phase 0 and report exact prerequisites. Do not authorize execution, integrations, or release.",
+      "skills": [],
+      "owns": [
+        "docs/phase-coordination/**"
+      ],
+      "inputs": [
+        "Reviewed Origin and exact adopted scope",
+        "Current blocking requirements and evidence"
+      ],
+      "outputs": [
+        "Outcome and scope decisions",
+        "Resolved owner handoffs"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "runtime-supervisor",
+      "description": "Own isolated worker, supervisor, and VM lifecycle",
+      "prompt": "Use docs/execution-contract.md, docs/transport-decision.md and docs/threat-model.md. Design or implement only within a separately adopted scope; existing preflight/framing is intentional. Refuse host fallback or unqualified runtime. Keep creation reconciliation, cancellation and independently verified teardown distinct.",
+      "skills": [],
+      "owns": [
+        "runtime/**",
+        "crates/sandbox/**",
+        "docs/execution-contract.md",
+        "docs/transport-decision.md",
+        "docs/threat-model.md"
+      ],
+      "inputs": [
+        "Reviewed Origin and exact adopted scope",
+        "Current blocking requirements and evidence"
+      ],
+      "outputs": [
+        "Runtime lifecycle and teardown evidence"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "mcp-compatibility",
+      "description": "Own bounded general-agent MCP tool and transport compatibility",
+      "prompt": "Use docs/mcp-tool-server.md and docs/compatibility.md. Separate stdio, Streamable HTTP and expressly qualified legacy HTTP+SSE. Keep bounded parsing, grant checks, intent and response reconciliation consistent without lower-authority fallbacks.",
+      "skills": [],
+      "owns": [
+        "docs/mcp-tool-server.md",
+        "docs/compatibility.md",
+        "crates/mcp-adapter/**"
+      ],
+      "inputs": [
+        "Reviewed Origin and exact adopted scope",
+        "Current blocking requirements and evidence"
+      ],
+      "outputs": [
+        "Per-transport compatibility disposition and evidence"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "locus-integration",
+      "description": "Own persistent Locus and ordinary harness integration contract",
+      "prompt": "Use docs/locus-external-tool.md and docs/ORIGIN.md. Preserve independently useful local and general agent tools; hosted and persistent Locus integration is optional later work. Trace cross-device resume to current scope, exact job identity, and independently readable durable result. Never infer authority from a tool call or memory.",
+      "skills": [],
+      "owns": [
+        "docs/locus-external-tool.md"
+      ],
+      "inputs": [
+        "Reviewed Origin and exact adopted scope",
+        "Current blocking requirements and evidence"
+      ],
+      "outputs": [
+        "Separate persistent and ordinary-agent journeys"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "value-authority-reviewer",
+      "description": "Independently review user outcome, authority, and phase-end evidence",
+      "prompt": "Use the exact candidate, acceptance criteria and independent artifact/behavior evidence. Challenge whether material user value is proven, receipts are truthful, grants are current, unauthorized effects are absent, and earlier VM/transport gates remain in force. Do not invoke external models unless separately authorized, execute product or repair the author’s work as reviewer.",
+      "skills": [],
+      "owns": [
+        "docs/reviews/**"
+      ],
+      "inputs": [
+        "Reviewed Origin and exact adopted scope",
+        "Current blocking requirements and evidence"
+      ],
+      "outputs": [
+        "Independent read-only findings and exact limits"
+      ],
+      "dependsOn": [
+        "phase-lead",
+        "runtime-supervisor",
+        "mcp-compatibility",
+        "locus-integration"
+      ]
+    }
+  ]
+}

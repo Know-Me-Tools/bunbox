@@ -1,0 +1,38 @@
+schema: spec-driven
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
+
+context: |
+  BunBox is an isolated and bounded execution tool for ordinary agents and optional persistent Locus use.
+  Start from docs/ORIGIN.md (BB-ORIGIN-001). Read docs/mcp-tool-server.md for general MCP compatibility and docs/locus-external-tool.md for the separate optional persistent Locus profile.
+  Preserve Phase 0 BLOCKED in docs/task-list.md. Runtime selection, bounded transport and independently verified real Mac VM isolation and teardown precede later execution, durable storage, MCP and hosted or Locus work.
+  Bind requirements and VLBV evidence to the exact authorized Origin revision and scene. No host fallback, approved-effect inference, phase activation, or change to established verification and release gates.

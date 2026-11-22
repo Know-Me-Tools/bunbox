@@ -6,7 +6,7 @@ Rust-managed Bun code interpreter with a Microsandbox VM boundary, following the
 
 ## Intended use
 
-[Read the BunBox Origin story](docs/ORIGIN.md). Regular agents will be able to use BunBox as a separately qualified [rmcp tool server](docs/mcp-tool-server.md), with STDIO and Streamable HTTP profiles. The old two-endpoint HTTP+SSE protocol requires its own compatibility adapter; it is not a feature of modern rmcp. No transport is implemented today.
+[Read the BunBox Origin story](docs/ORIGIN.md). The [consolidated KnowMe edition](docs/publication/index.html) combines the story, architecture, specification, and implementation plan. Regular agents will be able to use BunBox as a separately qualified [rmcp tool server](docs/mcp-tool-server.md), with STDIO and Streamable HTTP profiles. The old two-endpoint HTTP+SSE protocol requires its own compatibility adapter; it is not a feature of modern rmcp. No transport is implemented today.
 
 ## How it fits Locus and UAR
 
@@ -40,6 +40,10 @@ cargo test --workspace --locked --test '*'
 ```
 
 Tests cover local framing and executable behavior only. They do not establish VM isolation, cleanup, guest language semantics, or production readiness. No external Rust dependencies are currently linked.
+
+## License
+
+BunBox is open source under the [MIT License](LICENSE). Third-party assets and dependencies retain their own licenses.
 
 ## Next gate
 
