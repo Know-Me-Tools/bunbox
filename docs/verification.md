@@ -26,3 +26,7 @@ The 92.31% number applies only to this small foundation, not the planned interpr
 ## Workflow note
 
 Tests were authored before implementation, but no pre-implementation RED run was performed: the loaded Rust workspace workflow calls for batched integration verification at a completed code boundary. Do not report a RED/GREEN cycle as observed.
+
+## Fixed unanswered-demo profile
+
+The local staged MCP server executed the pinned unanswered-demo recipe in a disposable Darwin ARM64-hosted Linux VM. The [verification record](../runtime/staged-mail-verification.json) includes the exact recipe, image and executable digests, bounded results, cancellation, an interrupted worker and capacity held after an unconfirmed creation. The normal shared-inventory before/after check passed. The separate uncertainty scenario used an empty private runtime home with image pulling disabled. See the [profile and setup](staged-mail-profile.md) to reproduce.

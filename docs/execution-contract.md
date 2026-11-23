@@ -39,3 +39,5 @@ No arbitrary package installation, public inbound networking, arbitrary host mou
 Expose implemented capabilities and exclusions through the eventual MCP environment description. Do not advertise target capabilities as currently available.
 
 **Separately proposed profile:** [BunBox as an external tool for Locus](locus-external-tool.md) adds authenticated cloud job and file contracts. It does not change this single-owner profile, the no-fallback rule or the local qualification gate.
+
+The [local staged mail profile](staged-mail-profile.md) documents the separate fixed-recipe stdio entry point and its host and guest bounds.

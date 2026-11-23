@@ -50,3 +50,5 @@ BunBox is open source under the [MIT License](LICENSE). Third-party assets and d
 Resolve the released Microsandbox SDK's unbounded event queue and validate a separate termination path. Then approve isolated runtime provisioning, run real Bun-in-VM compatibility tests, and advance to the execution worker. Preserve the existing `msb 0.2.6` installation. Do not use guessed SDK calls or automatically download runtimes during builds.
 
 See [compatibility evidence](docs/compatibility.md), [execution contract](docs/execution-contract.md), [threat model](docs/threat-model.md), and [task list](docs/task-list.md).
+
+The [local staged mail profile](docs/staged-mail-profile.md) documents the separate fixed-recipe stdio entry point and its host and guest bounds.
