@@ -1,0 +1,57 @@
+{
+  "scope": "Fixed unanswered-demo-v1 recipe in a local macOS arm64 microsandbox VM",
+  "verifiedAtUtc": "2026-11-23T22:48:35+00:00",
+  "platform": "macOS-26.7.4-arm64-arm-64bit",
+  "architecture": "arm64",
+  "microsandboxVersion": "0.7.2",
+  "msbSha256": "b7292a901ffc93f84860264c6e0d4636cc9aeeddfb76c952f7c2204ea417ae4b",
+  "libkrunfwSha256": "43e36ee2b1f2a7488c25f34193f657568a7733281d856ad267506ccc02993d59",
+  "image": "docker.io/oven/bun@sha256:3121e24dc54514f0e37bcc996a9e6df64519b4caff03a33bbb9993baca7c403b",
+  "guestBunVersion": "1.4.2",
+  "serviceBinarySha256": "1adc181346ff5a8b95a2070cb9c03bc7ca6c80505dff57a2bd09d27c4fc3983d",
+  "lockfileSha256": "4bdf98fa94374ccc07b86d07f8aafd89382f5ee03bb819b3d85a7bb94aac0d2c",
+  "recipeSha256": "14a6a558997f83ab816365d29fa6d25031a05c4e9d456a8d2797ad7fc1f5dc91",
+  "localChecks": [
+    "cargo build --locked -p bunbox-mcp",
+    "BUNBOX_MSB=<pinned-msb> MSB_HOME=<provisioned-home> python3 crates/bunbox-mcp/tests/local_venue.py target/debug/bunbox-mcp"
+  ],
+  "verified": {
+    "rejectedUnknownRecipe": true,
+    "changedKeyInputConflicts": true,
+    "retriedRequestReusedOriginalJob": true,
+    "freshOwnerAndRunDenied": true,
+    "stdioDisconnectAndReconnect": true,
+    "knownUnansweredResultSha256": "f9ab18f648318b675d45a0dff0c2536ebd510fa7182f36272ec99664397847d1",
+    "completeAndPartialCoverage": true,
+    "acknowledgedCancellation": true,
+    "killedOwnedWorker": "outcome_unknown",
+    "uncachedOfflineCreation": "cleanup_unknown",
+    "uncertainCapacityHeldAfterRestart": true,
+    "inventoryRestored": true,
+    "inputFilesRemaining": 0,
+    "activeReservationRemaining": false
+  },
+  "observedReceipts": [
+    {
+      "status": "cancelled",
+      "elapsedMs": 259,
+      "inputSha256": "587cc205468b961ee80a325d72d873f1fb15c5ed63745700e6dc665d90374da8"
+    },
+    {
+      "status": "outcome_unknown",
+      "inputSha256": "587cc205468b961ee80a325d72d873f1fb15c5ed63745700e6dc665d90374da8"
+    },
+    {
+      "status": "succeeded",
+      "elapsedMs": 659,
+      "inputSha256": "36ede32b5ad328a99739b5ba92f880e7ea650f231c2509dae50241f1188917f2",
+      "resultSha256": "d9d728d61833ef94cfd50c3660353f175e4ccc610d3d3e777924523541042e17"
+    },
+    {
+      "status": "succeeded",
+      "elapsedMs": 765,
+      "inputSha256": "587cc205468b961ee80a325d72d873f1fb15c5ed63745700e6dc665d90374da8",
+      "resultSha256": "f9ab18f648318b675d45a0dff0c2536ebd510fa7182f36272ec99664397847d1"
+    }
+  ]
+}
